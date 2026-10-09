@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Don't Trust the Click - QR Guard</title>
+<style>
+:root{--bg:#0b1220;--panel:#142036;--panel2:#1e2d4a;--txt:#f2f5fa;--muted:#9aa8c0;--red:#ff5a5f;--amber:#ffb020;--green:#2ee6a6;--blue:#4da3ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f3f6fb;--panel:#fff;--panel2:#e6ecf6;--txt:#0b1220;--muted:#51607a}}
+:root[data-theme="light"]{--bg:#f3f6fb;--panel:#fff;--panel2:#e6ecf6;--txt:#0b1220;--muted:#51607a}
+:root[data-theme="dark"]{--bg:#0b1220;--panel:#142036;--panel2:#1e2d4a;--txt:#f2f5fa;--muted:#9aa8c0}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 Calibri,Arial,sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+.kick{color:var(--red);font-weight:700;letter-spacing:.2em;font-size:12px}
+h1{font:800 clamp(28px,6vw,40px)/1.1 Arial,sans-serif;margin:6px 0 8px}
+.sub{color:var(--muted);margin:0 0 20px}
+.card{background:var(--panel);border-radius:14px;padding:16px;margin-bottom:16px}
+label{font-weight:700;display:block;margin-bottom:6px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:200px;padding:12px;border-radius:10px;border:1px solid var(--panel2);background:var(--bg);color:var(--txt);font-size:16px}
+button,.btn{background:var(--blue);color:#06101f;border:0;border-radius:10px;padding:12px 16px;font-weight:700;font-size:15px;cursor:pointer}
+button.alt,.btn.alt{background:var(--panel2);color:var(--txt)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chips button{font-size:13px;padding:7px 10px}
+#cam{display:none;width:100%;max-height:300px;border-radius:12px;margin-top:10px;background:#000}
+#res{display:none}
+.verdict{font:800 26px Arial,sans-serif}
+.bar{height:14px;border-radius:7px;background:var(--panel2);overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;width:0;transition:width .5s}
+.real{word-break:break-all;background:var(--bg);border-radius:8px;padding:10px;font-family:"Courier New",monospace;font-size:14px;margin:6px 0}
+ul{padding-left:20px;margin:8px 0}li{margin:6px 0}
+.why{color:var(--muted);font-size:14px}
+.safe{color:var(--green)}.sus{color:var(--amber)}.bad{color:var(--red)}
+details summary{cursor:pointer;font-weight:700}
+
+#alert{display:none;position:fixed;inset:0;z-index:99;align-items:center;justify-content:center;text-align:center;padding:24px;color:#fff;background:rgba(160,10,20,.96)}
+#alert.sus{background:rgba(150,95,0,.96)}
+#alert.on{display:flex;animation:pulse .8s infinite alternate}
+@keyframes pulse{from{background-color:rgba(160,10,20,.97)}to{background-color:rgba(60,0,5,.97)}}
+#alert.sus.on{animation-name:pulse2}
+@keyframes pulse2{from{background-color:rgba(150,95,0,.97)}to{background-color:rgba(70,40,0,.97)}}
+@media (prefers-reduced-motion:reduce){#alert.on,#alert.sus.on{animation:none}}
+#alert.ok{background:rgba(4,110,78,.96)}
+#alert.ok.on{animation:none}
+#alert.ok button{color:#044d36}
+#alert .box{max-width:520px}
+#alert .big{font-size:84px;line-height:1}
+#alert h2{font:800 clamp(26px,7vw,40px)/1.1 Arial,sans-serif;margin:10px 0}
+#alert .h{font-family:"Courier New",monospace;background:rgba(0,0,0,.35);padding:8px 10px;border-radius:8px;word-break:break-all;margin:12px 0}
+#alert button{background:#fff;color:#7a0010;margin-top:14px}
+.snd{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;margin:0 0 14px}
+
+nav{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--panel2);padding-top:env(safe-area-inset-top,0px)}
+nav .in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+nav b{font-family:Arial,sans-serif;margin-right:auto}nav a{color:var(--muted);text-decoration:none;font-weight:700;font-size:14px}nav a:hover{color:var(--txt)}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px}
+.hero{padding:56px 16px 40px;text-align:center}
+.hero h1{font-size:clamp(36px,9vw,64px)}
+.hero p{max-width:620px;margin:0 auto 20px;color:var(--muted);font-size:18px}
+.cta{display:inline-block;text-decoration:none;background:var(--red);color:#fff;border-radius:10px;padding:13px 22px;font-weight:700}
+.cta.alt{background:var(--panel2);color:var(--txt);margin-left:8px}
+section.s{padding:36px 0}
+section.s h2,main h2{font:800 clamp(24px,5vw,32px)/1.15 Arial,sans-serif;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:16px}
+.grid .card{margin:0}.stat{font:800 34px Arial,sans-serif}
+.steps{counter-reset:n}.steps .card{position:relative;padding-left:56px;margin:0}
+.steps .card:before{counter-increment:n;content:counter(n);position:absolute;left:14px;top:14px;width:30px;height:30px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center}
+.qrs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:16px}
+.qrs figure{margin:0;background:var(--panel);border-radius:14px;padding:14px;text-align:center}
+.qrs img{width:100%;max-width:220px;image-rendering:pixelated;background:#fff;border-radius:6px}
+.qrs code{display:block;word-break:break-all;font-size:12px;color:var(--muted);margin-top:6px}
+footer{border-top:1px solid var(--panel2);padding:24px 16px;text-align:center;color:var(--muted);font-size:14px}
+html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+
+<div id="alert" role="alertdialog" aria-live="assertive" aria-labelledby="alT">
+  <div class="box">
+    <div class="big" id="alI">&#9888;</div>
+    <h2 id="alT"></h2>
+    <p id="alR" style="font-size:18px;margin:0"></p>
+    <div class="h" id="alH"></div>
+    <p style="font-weight:700;margin:0" id="alA"></p>
+    <button id="alX">I understand - close warning</button>
+  </div>
+</div>
+<nav><div class="in"><b>&#128737; QR Guard</b><a href="#problem">Problem</a><a href="#how">How it works</a><a href="#tool">Try it</a><a href="#limits">Limits</a></div></nav>
+<header class="hero">
+  <div class="kick">CYBER SECURITY PROJECT</div>
+  <h1>Don't Trust the Click</h1>
+  <p>Fake QR codes look just like real ones. QR Guard checks the hidden link first, then warns you before anything opens.</p>
+  <a class="cta" href="#tool">Try QR Guard</a>
+</header>
+<div class="wrap">
+<section class="s" id="problem">
+  <h2>The problem</h2>
+  <p class="why" style="font-size:16px">A QR code is just a web address drawn as squares. The rules behind QR codes say how to store the address, not who made it. So a criminal's code looks identical to a real one, and your phone opens it after one tap. This trick is called <b>quishing</b> (QR + phishing; phishing means fake messages or sites that trick you into giving away passwords or money).</p>
+  <div class="grid">
+    <div class="card"><div class="stat bad">249K+</div>QR phishing emails in Nov 2025, up from about 47K in Aug 2025</div>
+    <div class="card"><div class="stat sus">36%</div>of QR phishing cases were correctly spotted and reported</div>
+    <div class="card"><div class="stat" style="color:var(--blue)">12%</div>of all phishing attacks in 2025 contained a QR code</div>
+  </div>
+  <p class="why">Source: Keepnet Labs and QR Tiger 2026 roundups (security-vendor reports, so treat as indicators).</p>
+</section>
+<section class="s" id="how">
+  <h2>How QR Guard works</h2>
+  <div class="grid steps">
+    <div class="card"><b>Scan</b><br><span class="why">Camera or picture reads the code.</span></div>
+    <div class="card"><b>Decode only</b><br><span class="why">Get the text inside. Do not open it.</span></div>
+    <div class="card"><b>Five checks</b><br><span class="why">HTTPS, look-alike name, short link, fake brand inside, scam words or raw number.</span></div>
+    <div class="card"><b>Score 0-100</b><br><span class="why">Higher means more dangerous.</span></div>
+    <div class="card"><b>Warn</b><br><span class="why">Green = safe, amber = careful, red + siren = do not open.</span></div>
+  </div>
+</section>
+</div>
+<main id="tool">
+<h2>Try QR Guard</h2>
+<p class="sub">Scan or paste first. See the real destination and a risk score before anything opens. Nothing is ever opened or sent anywhere; all checks run on this page.</p>
+
+<label class="snd" style="margin-top:-8px"><input type="checkbox" id="snd" checked> Warning sound and vibration on</label>
+<div class="card">
+  <label for="u">1. Paste the link a QR code contains</label>
+  <div class="row"><input id="u" type="text" placeholder="e.g. http://paypa1.com/verify-account" autocomplete="off"><button id="go">Check link</button></div>
+  <div class="chips" id="ex"></div>
+</div>
+
+<div class="card">
+  <label>2. Or read a real QR code</label>
+  <div class="row">
+    <label class="btn alt" style="margin:0">Upload QR picture<input id="f" type="file" accept="image/*" hidden></label>
+    <button class="alt" id="camBtn">Use camera</button>
+  </div>
+  <video id="cam" playsinline muted></video>
+  <p class="why" id="msg" style="margin:10px 0 0"></p>
+</div>
+
+<div class="card" id="res" aria-live="polite">
+  <div class="verdict" id="vd"></div>
+  <div class="bar"><i id="bar"></i></div>
+  <div><b id="sc"></b></div>
+  <p class="why" style="margin:12px 0 2px">The QR says it goes to:</p><div class="real" id="full"></div>
+  <p class="why" style="margin:12px 0 2px">The real website name is:</p><div class="real" id="host"></div>
+  <p style="margin:12px 0 0"><b>Why:</b></p><ul id="why"></ul>
+  <p id="adv" style="font-weight:700"></p>
+</div>
+
+<details class="card">
+  <summary>Plain-word guide to the terms</summary>
+  <ul class="why">
+    <li><b>Phishing</b>: fake messages or sites that trick you into giving away passwords or money.</li>
+    <li><b>HTTPS</b>: a locked connection. The lock only means your data is scrambled on the way, not that the site is honest.</li>
+    <li><b>Look-alike domain</b>: a fake website name that copies a real one, like paypa1.com (number 1 instead of letter l).</li>
+    <li><b>Short link</b>: links like bit.ly hide where they really go.</li>
+    <li><b>Raw IP address</b>: a number like 192.168.4.7 instead of a name; real brands do not use these.</li>
+  </ul>
+</details>
+</main>
+
+
+<div class="wrap">
+<section class="s" id="limits">
+  <h2>Limits</h2>
+  <p class="why" style="font-size:16px">QR Guard checks the address text only. It cannot follow redirects or look up how new a website is yet, so a brand-new scam site with a clean-looking address could pass. Its list of trusted brands is a small demo list. Next steps: live redirect checks, domain-age lookup, and a phone app.</p>
+</section>
+</div>
+<footer><b>Ahmad S</b> | Software engineer, student at TKMIT | Cyber Security<br>Everything runs in your browser. No link or picture is ever sent anywhere or opened.</footer>
+
+<script>
+const TRUSTED=["google.com","paypal.com","sbi.co.in","amazon.in","phonepe.com","paytm.com"];
+const SHORT=["bit.ly","tinyurl.com","t.co","is.gd","cutt.ly","rb.gy"];
+const RISKY=[".xyz",".top",".click",".zip",".tk",".icu",".work"];
+const EXAMPLES=[["Real PayPal","https://www.paypal.com/signin"],["Fake PayPal","http://paypa1.com/verify-account"],["Short link","https://bit.ly/3xParking"],["Raw IP","http://192.168.4.7/pay-refund"],["Fake SBI","https://sbi.co.in.kyc-update.xyz/login"]];
+const $=id=>document.getElementById(id);
+
+function dist(a,b){let p=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c.push(Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]!==b[j-1]?1:0)));p=c}return p[b.length]}
+function baseDomain(h){const p=h.split(".");return(/\.(co|com|org|net)\.[a-z]{2}$/.test(h)&&p.length>=3)?p.slice(-3).join("."):p.slice(-2).join(".")}
+
+function special(url){
+  const m=url.match(/^([a-z][a-z0-9+.-]*):/i);
+  if(!m)return null;
+  const sc=m[1].toLowerCase();
+  if(sc==="http"||sc==="https")return null;
+  const T={
+    upi:[45,"Payment request: check the payee name and amount before paying. Fake QR stickers often redirect money to a scammer"],
+    javascript:[90,"Contains runnable script code instead of a website"],
+    data:[80,"Hides content inside the code itself instead of a website"],
+    intent:[70,"Tries to launch an app on your phone directly"],
+    wifi:[35,"Joins a Wi-Fi network. A fake one can spy on your traffic"],
+    tel:[30,"Starts a phone call; could be a premium-rate number"],
+    sms:[35,"Pre-fills a text message; could subscribe you to paid services"],
+    smsto:[35,"Pre-fills a text message; could subscribe you to paid services"],
+    mailto:[25,"Opens an email draft to an address you did not choose"]
+  };
+  const t=T[sc]||[40,"Unusual type of QR content ("+sc+")"];
+  const score=t[0];
+  return{url,host:sc+" (not a normal website)",score,v:score<25?"SAFE":score<55?"SUSPICIOUS":"DANGEROUS",why:[t[1]]};
+}
+function analyse(raw){
+  let url=raw.trim(),score=0,why=[];
+  const sp=special(url);if(sp)return sp;
+  const found=url.match(/https?:\/\/[^\s"'<>]+/i);
+  if(found&&found[0]!==url)url=found[0];
+  if(/\s/.test(url)&&!/^[a-z]+:\/\//i.test(url)===false)url=url.replace(/\s+/g,"%20");
+  if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(url)&&!/[.\/]/.test(url)){
+    return{url,host:"(plain text, no link)",score:0,v:"SAFE",why:["This code holds plain text, not a web address"]};
+  }
+  let u;try{u=new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(url)?url:"http://"+url)}catch(e){
+    return{url,host:"(could not read the address)",score:60,v:"DANGEROUS",why:["The address is malformed, which is itself a warning sign"]}}
+  const host=u.hostname.toLowerCase();
+  if(u.protocol!=="https:"){score+=25;why.push("Not HTTPS: data travels unprotected")}
+  if(/^\d{1,3}(\.\d{1,3}){3}$/.test(host)||host.includes(":")){score+=35;why.push("Address is a raw number, not a real name")}
+  if(host.startsWith("xn--")||host.includes(".xn--")){score+=40;why.push("Look-alike letters (punycode) used to imitate a real site")}
+  if(/@/.test(url.replace(/^[a-z]+:\/\//i,"").split("/")[0])){score+=35;why.push("'@' trick hides the real destination")}
+  if(SHORT.includes(host)){score+=30;why.push("Shortened link hides where it really goes")}
+  if(RISKY.some(e=>host.endsWith(e))){score+=20;why.push("Domain ending often used in scams")}
+  if(host.split(".").length-1>=4){score+=15;why.push("Too many sub-parts in the name")}
+  if(/(login|verify|secure|update|reward|refund|kyc)/i.test(url)){score+=15;why.push("Pressure words in address (login, verify, refund...)")}
+  const base=baseDomain(host);
+  for(const g of TRUSTED){const d=dist(base,g);if(base!==g&&d>0&&d<=2){score+=45;why.push(`Looks like '${g}' but is really '${base}' (fake twin)`);break}}
+  for(const g of TRUSTED){if(host.includes(g)&&base!==g){score+=40;why.push(`Brand name '${g}' is placed inside someone else's domain`);break}}
+  score=Math.min(score,100);
+  const v=score<25?"SAFE":score<55?"SUSPICIOUS":"DANGEROUS";
+  return{url,host,score,v,why}
+}
+
+
+let ac=null,sirenT=0,sirenOsc=null;
+function ctx(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==="suspended")ac.resume();return ac}catch(e){return null}}
+function stopSiren(){clearInterval(sirenT);try{if(sirenOsc){sirenOsc.stop();sirenOsc=null}}catch(e){}if(navigator.vibrate)navigator.vibrate(0)}
+function siren(level){
+  stopSiren();
+  if(!$("snd").checked)return;
+  const a=ctx();if(!a)return;
+  try{
+    const o=a.createOscillator(),g=a.createGain();
+    o.type=level==="bad"?"square":"sine";g.gain.value=level==="bad"?0.12:0.08;
+    o.connect(g);g.connect(a.destination);o.start();sirenOsc=o;
+    let hi=false,n=0;const max=level==="bad"?14:4;
+    const step=()=>{hi=!hi;n++;o.frequency.setValueAtTime(level==="bad"?(hi?950:550):(hi?700:520),a.currentTime);
+      if(n>=max){stopSiren()}};
+    step();sirenT=setInterval(step,level==="bad"?260:300);
+    if(navigator.vibrate)navigator.vibrate(level==="bad"?[300,150,300,150,300,150,600]:[200,100,200]);
+  }catch(e){}
+}
+let okT=0;
+function chime(){
+  if(!$("snd").checked)return;
+  const a=ctx();if(!a)return;
+  try{[523.25,659.25,783.99].forEach((f,i)=>{
+    const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+i*0.16;
+    o.type="sine";o.frequency.value=f;o.connect(g);g.connect(a.destination);
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.18,t+0.03);g.gain.exponentialRampToValueAtTime(0.0001,t+0.45);
+    o.start(t);o.stop(t+0.5)});
+    if(navigator.vibrate)navigator.vibrate(120)}catch(e){}
+}
+function warn(r){
+  clearTimeout(okT);
+  if(r.v==="SAFE"){
+    stopSiren();
+    $("alert").className="ok on";
+    $("alI").innerHTML="&#10004;";
+    $("alT").textContent="GOOD QR CODE - SAFE";
+    $("alR").textContent="No warning signs found. This looks like a genuine website.";
+    $("alH").textContent=r.host;
+    $("alA").textContent="Still be careful if it asks for money or passwords.";
+    $("alX").textContent="Close";
+    chime();
+    okT=setTimeout(closeWarn,4000);
+    return;
+  }
+  $("alX").textContent="I understand - close warning";
+  const bad=r.v==="DANGEROUS";
+  $("alert").className=(bad?"":"sus ")+"on";
+  $("alI").innerHTML=bad?"&#9940;":"&#9888;";
+  $("alT").textContent=bad?"FAKE QR CODE DETECTED":"SUSPICIOUS QR CODE";
+  $("alR").textContent=r.why[0]||"";
+  $("alH").textContent=r.host;
+  $("alA").textContent=bad?"DO NOT OPEN THIS LINK. Do not enter passwords or pay.":"Be careful. Confirm with the owner before opening.";
+  siren(bad?"bad":"sus");
+  setTimeout(()=>{try{$("alX").focus()}catch(e){}},50);
+}
+function closeWarn(){clearTimeout(okT);$("alert").classList.remove("on");stopSiren()}
+$("alX").onclick=closeWarn;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeWarn()});
+$("snd").onchange=()=>{if(!$("snd").checked)stopSiren();else ctx()};
+
+function show(raw){
+  const r=analyse(raw);
+  if(!r){$("msg").textContent="That does not look like a web address. Try again.";return}
+  $("res").style.display="block";
+  const cls=r.v==="SAFE"?"safe":r.v==="SUSPICIOUS"?"sus":"bad";
+  const col=r.v==="SAFE"?"var(--green)":r.v==="SUSPICIOUS"?"var(--amber)":"var(--red)";
+  $("vd").textContent=r.v;$("vd").className="verdict "+cls;
+  $("bar").style.background=col;$("bar").style.width=r.score+"%";
+  $("sc").textContent="Risk score: "+r.score+" / 100";
+  $("full").textContent=r.url;$("host").textContent=r.host;
+  $("why").innerHTML="";
+  (r.why.length?r.why:["No warning signs found in the address text"]).forEach(t=>{const li=document.createElement("li");li.textContent=t;$("why").appendChild(li)});
+  $("adv").textContent=r.v==="SAFE"?"Looks fine. Still be careful if asked for money or passwords.":r.v==="SUSPICIOUS"?"Be careful. Confirm with the owner before opening.":"Do not open this. It shows classic fake-QR tricks.";
+  $("adv").className=cls;
+  $("res").scrollIntoView({behavior:"smooth",block:"nearest"});
+  warn(r);
+}
+
+function loadScript(src){return new Promise((res,rej)=>{const t=document.createElement("script");t.src=src;t.onload=res;t.onerror=rej;document.head.appendChild(t)})}
+let libP=null;
+function ensureLib(){
+  if(window.jsQR)return Promise.resolve(true);
+  if(!libP)libP=(async()=>{
+    for(const src of ["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"]){
+      try{await loadScript(src);if(window.jsQR)return true}catch(e){}
+    }
+    return false})();
+  return libP;
+}
+let bd=null;try{if("BarcodeDetector" in window)bd=new BarcodeDetector({formats:["qr_code"]})}catch(e){bd=null}
+
+function scaledData(src,w,h,max){
+  const s=Math.min(1,max/Math.max(w,h)),c=document.createElement("canvas");
+  c.width=Math.max(1,Math.round(w*s));c.height=Math.max(1,Math.round(h*s));
+  const x=c.getContext("2d",{willReadFrequently:true});
+  x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
+  x.drawImage(src,0,0,c.width,c.height);
+  return x.getImageData(0,0,c.width,c.height);
+}
+async function decodeSource(src,w,h){
+  if(bd){try{const r=await bd.detect(src);if(r&&r.length&&r[0].rawValue)return{data:r[0].rawValue}}catch(e){}}
+  if(!(await ensureLib()))throw new Error("lib");
+  for(const max of [1600,1000,640,400]){
+    const d=scaledData(src,w,h,max);
+    const code=jsQR(d.data,d.width,d.height,{inversionAttempts:"attemptBoth"});
+    if(code&&code.data)return code;
+  }
+  return null;
+}
+
+document.addEventListener("pointerdown",()=>{if($("snd").checked)ctx()},{once:true});
+$("go").onclick=()=>show($("u").value);
+$("u").addEventListener("keydown",e=>{if(e.key==="Enter")show($("u").value)});
+EXAMPLES.forEach(([n,l])=>{const b=document.createElement("button");b.className="alt";b.textContent=n;b.onclick=()=>{$("u").value=l;show(l)};$("ex").appendChild(b)});
+
+$("f").onchange=e=>{
+  const file=e.target.files[0];if(!file)return;
+  $("msg").textContent="Reading the QR picture...";
+  const img=new Image();
+  img.onload=async()=>{
+    try{
+      const code=await decodeSource(img,img.naturalWidth||img.width,img.naturalHeight||img.height);
+      if(code&&code.data){$("msg").textContent="QR read. Nothing was opened. It contains: "+code.data;$("u").value=code.data;show(code.data)}
+      else $("msg").textContent="No QR code found in that picture. Try a clearer, closer image, or paste the link above.";
+    }catch(err){
+      $("msg").textContent=err&&err.message==="lib"?"The QR-reading helper could not load (blocked network?). Paste the link into box 1 instead.":"Could not read that image. Paste the link into box 1 instead."}
+    URL.revokeObjectURL(img.src);e.target.value=""};
+  img.onerror=()=>{$("msg").textContent="That file is not a readable image (HEIC photos may not work; use PNG or JPG).";e.target.value=""};
+  img.src=URL.createObjectURL(file);
+};
+
+let stream=null,raf=0;
+function stopCam(){cancelAnimationFrame(raf);if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$("cam").style.display="none";$("camBtn").textContent="Use camera"}
+$("camBtn").onclick=async()=>{
+  if(stream){stopCam();return}
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}});
+    const v=$("cam");v.srcObject=stream;v.style.display="block";await v.play();
+    $("camBtn").textContent="Stop camera";$("msg").textContent="Point the camera at a QR code.";
+    let busy=false;
+    const tick=async()=>{
+      if(!stream)return;
+      if(!busy&&v.readyState===v.HAVE_ENOUGH_DATA&&v.videoWidth){
+        busy=true;
+        try{const code=await decodeSource(v,v.videoWidth,v.videoHeight);
+          if(code&&code.data){stopCam();$("msg").textContent="QR read. Nothing was opened.";$("u").value=code.data;show(code.data);return}}
+        catch(err){if(err&&err.message==="lib"){stopCam();$("msg").textContent="The QR-reading helper could not load. Paste the link instead.";return}}
+        busy=false}
+      raf=requestAnimationFrame(tick)};
+    tick();
+  }catch(err){stopCam();$("msg").textContent="Camera is not available here. Use 'Upload QR picture' or paste the link instead."}
+};
+</script>
+</body>
+</html>
